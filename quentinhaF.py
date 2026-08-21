@@ -15,7 +15,7 @@ NOME_CLIENTE = "Victor Santana"
 TELEFONE = "21971016836"
 HORA_ABRE = "11:30"        # começa a tentar a partir deste horário
 HORA_LIMITE = "14:00"      # para de tentar depois deste horário
-FINALIZAR_PEDIDO = False   # True = clica no botão final e fecha o pedido de verdade
+FINALIZAR_PEDIDO = True   # True = clica no botão final e fecha o pedido de verdade
 
 
 # Configuração da função para fazer o pedido
