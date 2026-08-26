@@ -118,17 +118,14 @@ def fazer_pedido():
         )))
         if FINALIZAR_PEDIDO:
             confirmar_button.click()
-            print("Pedido finalizado!")
-        else:
-            print("Fluxo concluído (FINALIZAR_PEDIDO=False, botão final NÃO clicado).")
+            print(f"Pedido enviado {datetime.now():%H:%M:%S.%f}")
 
         time.sleep(120)  # Mantém o navegador aberto para inspeção
 
     except Exception as e:
-        print(f"Erro durante o pedido: {e}")
+        print(f"Erro: {e}")
         try:
             driver.save_screenshot("erro_pedido.png")
-            print("Screenshot do erro salvo em 'erro_pedido.png'.")
         except Exception:
             pass
         # Navegador mantido aberto para inspeção do que deu errado
@@ -136,17 +133,23 @@ def fazer_pedido():
     #     driver.quit()  # descomente para fechar o navegador automaticamente
 
 
-# === Agendamento: espera a janela de horário e faz o pedido ===
+# === Agendamento de alta precisão: dispara exatamente às HORA_ABRE ===
 hora_abre = datetime.strptime(HORA_ABRE, "%H:%M").time()
 hora_limite = datetime.strptime(HORA_LIMITE, "%H:%M").time()
-ja_foi = False
 
-while not ja_foi:
-    agora = datetime.now().time()
-    if hora_abre <= agora < hora_limite:
-        fazer_pedido()
-        print("Pedido feito com sucesso!")
-        ja_foi = True
-    else:
-        print(f"Aguardando janela de {HORA_ABRE}-{HORA_LIMITE}... (agora: {agora.strftime('%H:%M:%S')})")
-        time.sleep(10)  # Checa novamente a cada 10s (evita uso de 100% de CPU)
+_agora = datetime.now()
+alvo = _agora.replace(hour=hora_abre.hour, minute=hora_abre.minute,
+                      second=0, microsecond=0)
+
+if _agora.time() >= hora_limite:
+    print("Fora da janela de horário.")
+else:
+    # Espera até o horário exato. Longe do alvo: dorme p/ poupar CPU.
+    # Últimos 3s: busy-wait puro (sem sleep) p/ máxima precisão no disparo.
+    while datetime.now() < alvo:
+        restante = (alvo - datetime.now()).total_seconds()
+        if restante > 60:
+            time.sleep(30)
+        elif restante > 3:
+            time.sleep(0.2)
+    fazer_pedido()
